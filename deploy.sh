@@ -138,10 +138,13 @@ fi
 if [[ -n "$DOMAIN" ]]; then
   log "Configuring Nginx for $DOMAIN..."
 
+  # Add rate limit zone to main nginx.conf (http context)
+  if ! grep -q 'emailstmp_api' /etc/nginx/nginx.conf; then
+    sudo sed -i '/http {/a \\n    limit_req_zone \$binary_remote_addr zone=emailstmp_api:10m rate=10r/s;' /etc/nginx/nginx.conf
+  fi
+
   # Start with HTTP-only config (needed for Certbot)
   sudo tee /etc/nginx/sites-available/emailstmp > /dev/null <<NGINX
-limit_req_zone \$binary_remote_addr zone=emailstmp_api:10m rate=10r/s;
-
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -166,7 +169,6 @@ server {
     }
 
     location /health {
-        limit_req off;
         proxy_pass http://localhost:3000/api/health;
         proxy_set_header Host            \$host;
         proxy_set_header X-Real-IP       \$remote_addr;
@@ -199,9 +201,12 @@ NGINX
 else
   log "No domain provided — Nginx configured for direct IP access on port 80."
 
-  sudo tee /etc/nginx/sites-available/emailstmp > /dev/null <<NGINX
-limit_req_zone \$binary_remote_addr zone=emailstmp_api:10m rate=10r/s;
+  # Add rate limit zone to main nginx.conf (http context)
+  if ! grep -q 'emailstmp_api' /etc/nginx/nginx.conf; then
+    sudo sed -i '/http {/a \\n    limit_req_zone \$binary_remote_addr zone=emailstmp_api:10m rate=10r/s;' /etc/nginx/nginx.conf
+  fi
 
+  sudo tee /etc/nginx/sites-available/emailstmp > /dev/null <<NGINX
 server {
     listen 80 default_server;
     server_name _;
@@ -226,7 +231,6 @@ server {
     }
 
     location /health {
-        limit_req off;
         proxy_pass http://localhost:3000/api/health;
         proxy_set_header Host            \$host;
         proxy_set_header X-Real-IP       \$remote_addr;
