@@ -76,7 +76,7 @@ if ! docker info &>/dev/null; then
 fi
 
 # --- Step 5: Swap (safety net for 1 GB RAM) ---
-if ! swapon --show | grep -q '/swapfile'; then
+if [[ ! -f /swapfile ]]; then
   log "Creating 1 GB swap file..."
   sudo fallocate -l 1G /swapfile
   sudo chmod 600 /swapfile
