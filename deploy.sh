@@ -93,28 +93,14 @@ if [[ ! -f .env ]]; then
   log "Setting up .env file..."
   API_KEY=$(openssl rand -hex 32)
 
-  echo ""
-  warn "You need to configure your .env file."
-  echo "A random API_KEY has been generated for you: $API_KEY"
-  echo ""
-
-  read -rp "SMTP_HOST (e.g. smtp.gmail.com): " SMTP_HOST
-  read -rp "SMTP_PORT (e.g. 587): " SMTP_PORT
-  read -rp "SMTP_USER (e.g. you@gmail.com): " SMTP_USER
-  read -rsp "SMTP_PASS: " SMTP_PASS
-  echo ""
-  read -rp "ALLOWED_ORIGINS (e.g. https://yourapp.com): " ALLOWED_ORIGINS
+  read -rp "ALLOWED_ORIGINS (comma-separated, e.g. https://yourapp.com), or press Enter for *: " ALLOWED_ORIGINS
+  ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-*}"
 
   cat > .env <<EOF
 NODE_ENV=production
 PORT=3000
 
 API_KEY=${API_KEY}
-
-SMTP_HOST=${SMTP_HOST}
-SMTP_PORT=${SMTP_PORT}
-SMTP_USER=${SMTP_USER}
-SMTP_PASS=${SMTP_PASS}
 
 ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
 
@@ -125,7 +111,11 @@ MAX_CONCURRENT_BATCHES=5
 EOF
 
   chmod 600 .env
-  log ".env created and locked down."
+  log ".env created. Your API_KEY is:"
+  echo ""
+  echo "  $API_KEY"
+  echo ""
+  warn "Save this key — you'll need it to authenticate API requests."
 else
   log ".env already exists — skipping."
 fi
