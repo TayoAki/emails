@@ -77,6 +77,9 @@ export const schemas = {
       from: Joi.string().max(320).pattern(/^[^\r\n]+$/).required(),
       replyTo: Joi.string().email(),
       delayMs: Joi.number().integer().min(1000).max(30000).default(3000),
+      schedule: Joi.object({
+        windowMinutes: Joi.number().integer().min(5).max(1440).required(),
+      }),
     }).required(),
   }),
 

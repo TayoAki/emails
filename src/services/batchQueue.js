@@ -4,6 +4,35 @@ import { sendEmail } from './smtpService.js';
 import sleep from '../utils/sleep.js';
 import logger from '../utils/logger.js';
 
+/**
+ * Build an array of delays (in ms) between each email.
+ * If schedule.windowMinutes is set, randomize delays to spread sends across the window.
+ * Otherwise, use the fixed delayMs.
+ */
+function buildDelays(count, options) {
+  if (count <= 1) return [];
+
+  const gaps = count - 1;
+
+  if (options.schedule?.windowMinutes) {
+    const windowMs = options.schedule.windowMinutes * 60 * 1000;
+    // Generate random points within the window, then sort to get intervals
+    const points = Array.from({ length: gaps }, () => Math.random() * windowMs);
+    points.sort((a, b) => a - b);
+    // Convert absolute points to gaps between them
+    const delays = [];
+    let prev = 0;
+    for (const point of points) {
+      delays.push(Math.max(point - prev, 1000)); // minimum 1s between sends
+      prev = point;
+    }
+    return delays;
+  }
+
+  // Fixed delay mode
+  return Array(gaps).fill(options.delayMs);
+}
+
 // In-memory job store: jobId → job state
 const jobs = new Map();
 
@@ -25,6 +54,9 @@ const queue = new Queue(
     if (!job) { activeBatches--; return done(); }
 
     job.status = 'running';
+
+    // Calculate delays: random spread across window, or fixed delay
+    const delays = buildDelays(emails.length, options);
 
     for (let i = 0; i < emails.length; i++) {
       const email = emails[i];
@@ -58,7 +90,7 @@ const queue = new Queue(
 
       // Delay between sends (skip after last email)
       if (i < emails.length - 1) {
-        await sleep(options.delayMs);
+        await sleep(delays[i]);
       }
     }
 
