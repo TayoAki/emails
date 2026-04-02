@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmailSTMP — Test UI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 1.25rem; font-weight: 600; color: #fff; margin-bottom: 0.25rem; }
+    .subtitle { font-size: 0.8rem; color: #555; margin-bottom: 2rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 1100px;
+    }
+
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+
+    .card h2 { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 0.2rem; }
+    .card p { font-size: 0.75rem; color: #555; margin-bottom: 1rem; }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #444;
+      margin: 0.75rem 0 0.4rem;
+    }
+
+    label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 0.2rem; }
+
+    input, textarea, select {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.8rem;
+      padding: 0.5rem 0.65rem;
+      margin-bottom: 0.6rem;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, textarea:focus { border-color: #444; }
+    textarea { resize: vertical; min-height: 70px; }
+
+    .row   { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.5rem; }
+
+    button {
+      width: 100%;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.6rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #1e3a6e; color: #666; cursor: not-allowed; }
+    button.green { background: #065f46; }
+    button.green:hover { background: #047857; }
+
+    .result {
+      margin-top: 0.75rem;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .result.success { border-color: #166534; color: #86efac; }
+    .result.error   { border-color: #7f1d1d; color: #fca5a5; }
+    .result.info    { border-color: #1e3a5f; color: #93c5fd; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .badge-post { background: #1e3a6e; color: #93c5fd; }
+    .badge-get  { background: #14532d; color: #86efac; }
+
+    .api-key-bar {
+      max-width: 1100px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .api-key-bar label { font-size: 0.75rem; color: #888; white-space: nowrap; margin: 0; }
+    .api-key-bar input { flex: 1; margin: 0; font-family: "SF Mono", "Fira Code", monospace; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #444;
+      border-top-color: #93c5fd;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<h1>EmailSTMP <span style="color:#555;font-weight:400">— Test UI</span></h1>
+<p class="subtitle">Development only. Fill in your SMTP credentials and test each endpoint.</p>
+
+<div class="api-key-bar">
+  <label for="globalApiKey">API Key</label>
+  <input id="globalApiKey" type="text" value="508b71e466c17d7d4038d7dbaa4acc37b83064776b6f72fcb2d17302b867b255" />
+</div>
+
+<div class="grid">
+
+  <!-- Test Connection -->
+  <div class="card">
+    <h2>Test Connection <span class="badge badge-post">POST</span></h2>
+    <p>Verify SMTP credentials without sending anything.</p>
+
+    <div class="section-label">SMTP</div>
+    <div class="row-3">
+      <div><label>Host</label><input id="tc-host" value="smtp.gmail.com" /></div>
+      <div>
+        <label>Port</label>
+        <select id="tc-port">
+          <option value="587" selected>587</option>
+          <option value="465">465</option>
+          <option value="2525">2525</option>
+        </select>
+      </div>
+      <div>
+        <label>Secure</label>
+        <select id="tc-secure">
+          <option value="false" selected>false</option>
+          <option value="true">true</option>
+        </select>
+      </div>
+    </div>
+    <label>Email (user)</label>
+    <input id="tc-user" type="email" placeholder="you@gmail.com" />
+    <label>App Password</label>
+    <input id="tc-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+
+    <button id="btn-test-connection">Test Connection</button>
+    <div id="tc-result" class="result"></div>
+  </div>
+
+  <!-- Send Single Email -->
+  <div class="card">
+    <h2>Send Email <span class="badge badge-post">POST</span></h2>
+    <p>Send a single email through your SMTP account.</p>
+
+    <div class="section-label">SMTP</div>
+    <div class="row-3">
+      <div><label>Host</label><input id="s-host" value="smtp.gmail.com" /></div>
+      <div>
+        <label>Port</label>
+        <select id="s-port">
+          <option value="587" selected>587</option>
+          <option value="465">465</option>
+          <option value="2525">2525</option>
+        </select>
+      </div>
+      <div>
+        <label>Secure</label>
+        <select id="s-secure">
+          <option value="false" selected>false</option>
+          <option value="true">true</option>
+        </select>
+      </div>
+    </div>
+    <label>Email (user)</label>
+    <input id="s-user" type="email" placeholder="you@gmail.com" />
+    <label>App Password</label>
+    <input id="s-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+
+    <div class="section-label">Email</div>
+    <label>From</label>
+    <input id="s-from" placeholder="Your Name <you@gmail.com>" />
+    <label>To</label>
+    <input id="s-to" type="email" placeholder="recipient@example.com" />
+    <label>Subject</label>
+    <input id="s-subject" value="Test from EmailSTMP" />
+    <label>Body</label>
+    <textarea id="s-text">This is a test email sent via the EmailSTMP microservice.</textarea>
+
+    <button id="btn-send">Send Email</button>
+    <div id="s-result" class="result"></div>
+  </div>
+
+  <!-- Send Batch -->
+  <div class="card">
+    <h2>Send Batch <span class="badge badge-post">POST</span></h2>
+    <p>Queue multiple emails. Returns a job ID immediately — poll for results below.</p>
+
+    <div class="section-label">SMTP</div>
+    <div class="row-3">
+      <div><label>Host</label><input id="b-host" value="smtp.gmail.com" /></div>
+      <div>
+        <label>Port</label>
+        <select id="b-port">
+          <option value="587" selected>587</option>
+          <option value="465">465</option>
+          <option value="2525">2525</option>
+        </select>
+      </div>
+      <div>
+        <label>Secure</label>
+        <select id="b-secure">
+          <option value="false" selected>false</option>
+          <option value="true">true</option>
+        </select>
+      </div>
+    </div>
+    <label>Email (user)</label>
+    <input id="b-user" type="email" placeholder="you@gmail.com" />
+    <label>App Password</label>
+    <input id="b-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+
+    <div class="section-label">Batch Options</div>
+    <label>From</label>
+    <input id="b-from" placeholder="Your Name <you@gmail.com>" />
+    <label>Delay between sends (ms)</label>
+    <input id="b-delay" type="number" value="3000" min="1000" max="30000" />
+    <label>Recipients — one per line: email | subject | body</label>
+    <textarea id="b-recipients" style="min-height:90px">recipient1@example.com | Test email 1 | Hi Alice, this is a test.
+recipient2@example.com | Test email 2 | Hi Bob, this is a test.</textarea>
+
+    <button id="btn-batch">Submit Batch</button>
+    <div id="b-result" class="result"></div>
+
+    <div class="section-label" style="margin-top:1rem">Poll Status</div>
+    <label>Job ID</label>
+    <input id="b-jobid" placeholder="Auto-filled after submit, or paste manually" />
+    <button id="btn-poll" class="green">Poll Status</button>
+    <div id="b-poll-result" class="result"></div>
+  </div>
+
+  <!-- Check Replies -->
+  <div class="card">
+    <h2>Check Replies <span class="badge badge-post">POST</span></h2>
+    <p>Connect to IMAP and fetch replies from the inbox.</p>
+
+    <div class="section-label">IMAP</div>
+    <div class="row-3">
+      <div><label>Host</label><input id="r-host" value="imap.gmail.com" /></div>
+      <div>
+        <label>Port</label>
+        <select id="r-port">
+          <option value="993" selected>993</option>
+          <option value="143">143</option>
+        </select>
+      </div>
+      <div>
+        <label>Secure</label>
+        <select id="r-secure">
+          <option value="true" selected>true</option>
+          <option value="false">false</option>
+        </select>
+      </div>
+    </div>
+    <label>Email (user)</label>
+    <input id="r-user" type="email" placeholder="you@gmail.com" />
+    <label>App Password</label>
+    <input id="r-pass" type="password" placeholder="xxxx xxxx xxxx xxxx" />
+
+    <div class="section-label">Options</div>
+    <div class="row">
+      <div><label>Since (date)</label><input id="r-since" type="date" /></div>
+      <div><label>Limit</label><input id="r-limit" type="number" value="10" min="1" max="200" /></div>
+    </div>
+    <label>Filter subjects (comma-separated, optional)</label>
+    <input id="r-subjects" placeholder="Re: Quick question, Re: Following up" />
+
+    <button id="btn-replies">Check Replies</button>
+    <div id="r-result" class="result"></div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
